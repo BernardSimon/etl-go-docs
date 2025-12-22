@@ -2,3 +2,4 @@
 /node_modules/
 /docs/public/release/
 /docs/.vitepress/cache/
+/package-lock.json
