@@ -1,43 +1,87 @@
+
 # 快速开始
-ETL-GO是一款开箱即用的开源数据集成工具，旨在帮助用户快速集成数据，实现数据离线同步，并提供计划任务、系统变量、前后置脚本来帮助用户解放双手，实现数据自动集成。
-## 特性
-- **开箱即用**：内置多种常用的数据源、处理器和目标组件
-- **高扩展性**：插件化架构，支持自定义组件开发
-- **可视化配置**：提供Web界面进行任务配置和监控
-- **多数据源支持**：MySQL、PostgreSQL、SQLite、Doris、CSV、JSON等
-- **丰富的处理器**：数据类型转换、行过滤、数据脱敏、列重命名等
-- **任务调度**：支持定时任务和手动触发
-- **变量管理**：动态配置和SQL变量支持
-- **文件管理**：内置文件上传和管理功能
-- **日志监控**：完善的日志记录和任务执行监控
-## 主要功能
-## 目前官方插件
-### 数据源 (DataSource)
-- MySQL
-- PostgreSQL
-- SQLite
-- Doris
-### 数据输入 (Source)
-- SQL查询（MySQL、PostgreSQL、SQLite）
-- CSV文件
-- JSON文件
-### 数据处理 (Processor)
-- convertType: 数据类型转换
-- filterRows: 行过滤
-- maskData: 数据脱敏（MD5、SHA256）
-- renameColumn: 列重命名
-- selectColumns: 列选择
-### 数据输出 (Sink)
-- SQL表（MySQL、PostgreSQL、SQLite）
-- CSV文件
-- JSON文件
-- Doris快速输出(stream_load)
-### 执行器 (Executor)
-- SQL执行（MySQL、PostgreSQL、SQLite）
-### 变量 (Variable)
-- SQL查询变量（MySQL、PostgreSQL、SQLite）
-::: warning 注意！
-若官方提供的插件无法满足您的需求，在使用第三方插件前请仔细核实插件信息，以免数据库敏感信息泄露，或数据损坏。
-:::
-## 技术栈
-本项目基于 [go-pocket-etl](https://github.com/changhe626/go-pocket-etl) 核心代码进行开发，其中后端基于Gin、GORM、Sqlite、Zap进行开发，前端基于Vue3、Antdv进行开发。
+
+本页面介绍如何快速运行 ETL-GO 并打开 Web 管理界面。建议先完成 `config.yaml` 的基本配置，再启动服务。
+
+## 1. 克隆仓库
+
+```bash
+git clone https://github.com/BernardSimon/etl-go.git
+cd etl-go
+```
+
+## 2. 安装后端依赖
+
+```bash
+go mod download
+```
+
+## 3. 安装前端依赖
+
+```bash
+cd web
+pnpm install
+cd ..
+```
+
+## 4. 编辑配置文件
+
+根目录下使用 `config.yaml` 管理运行参数。
+
+默认配置文件包含：
+
+- `serverUrl`：后端 API 地址，例如 `0.0.0.0:8080`
+- `runWeb`：是否启动内置静态前端服务
+- `webUrl`：内置前端服务地址，例如 `0.0.0.0:8081`
+- `database.path`：SQLite 存储文件位置
+- `pipeline.batchSize`：批量写入大小
+
+建议至少修改 `username`、`password` 和 `jwtSecret`。
+
+## 5. 启动后端服务
+
+```bash
+go build -o etl-go .
+./etl-go
+```
+
+如果配置中 `runWeb: true`，后端会同时启动静态 Web 控制台；否则只启动 API 服务。
+
+## 6. 访问 Web 管理界面
+
+默认访问：
+
+- 后端 API：`http://127.0.0.1:8080`
+- 前端控制台：`http://127.0.0.1:8081`
+
+如果 `runWeb: true`，后端启动时会自动尝试打开 Web 地址。
+
+## 7. 运行一个任务
+
+1. 登录 Web 控制台
+2. 配置数据源
+3. 创建任务并选择 Source/Processor/Sink
+4. 手动执行或设置 Cron 定时调度
+
+## 8. 用 API 做最小自检
+
+登录获取 token：
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/api/v1/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"password123"}'
+```
+
+查看组件元数据（验证工厂注册是否正常）：
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:8080/api/v1/components
+```
+
+## 9. 常见问题
+
+- 无法访问前端：请确认 `runWeb`、`webUrl` 和 `corsOrigins` 配置正确。
+- 后端启动失败：请检查 `config.yaml` 语法和 SQLite 文件访问权限。
+- 登录失败：默认用户名为 `admin`，默认密码为 `password123`，建议修改为强密码。

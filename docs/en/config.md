@@ -1,59 +1,95 @@
-# Configuration Items
-Configuration items are stored in `config.yaml` in the root directory of the project executable file.
+# Configuration File
 
-## Standard Configuration File
+ETL-GO uses `config.yaml` in the root directory for runtime configuration. The current version does not auto-create a template config — please edit the file directly from the repository root.
+
+## Key Configuration Options
+
 ```yaml
-# ./config.yaml
-username: admin                    # Administrator username
-password: password123             # Administrator password
-jwtSecret: <your-jwt-secret>      # JWT secret
-aesKey: <your-aes-key>            # AES encryption key
-initDb: false                     # Whether to initialize the database
-logLevel: prod                     # Log level (dev|prod)
-serverUrl: localhost:8080         # API service address
-runWeb: true                     # Whether to start the Web interface
-webUrl: localhost:8081            # Web interface address
+username: admin
+password: password123
+jwtSecret: <your-secret>
+apiSecret: <your-api-secret>
+aesKey: <your-aes-key>
+initDb: false
+logLevel: dev
+log:
+  filename: ./log/app.log
+  maxSize: 20
+  maxBackups: 3
+  maxAge: 7
+  compress: true
+database:
+  path: ./data.db
+  maxOpenConns: 10
+  maxIdleConns: 5
+  connMaxLifetime: 300
+pipeline:
+  batchSize: 1000
+  channelSize: 10000
+serverUrl: 0.0.0.0:8080
+runWeb: false
+webUrl: 0.0.0.0:8081
+corsOrigins:
+  - http://localhost:8081
+  - http://localhost:5173
 ```
 
-## Main Configuration Items
+## Parameter Reference
 
-### Login Information
-- username: Administrator username
-- password: Administrator password
-- jwtSecret: JWT secret
+- `username` / `password`: Web login credentials.
+- `jwtSecret`: JWT authentication signing key.
+- `apiSecret`: API authentication signing key.
+- `aesKey`: AES encryption/decryption key for sensitive field encryption.
+- `initDb`: Set to `true` on first run to automatically execute database migration.
+- `logLevel`: `dev` or `prod`.
+- `log`: Log rotation config (filename, max size, backup count, compression, etc.).
+- `database`: Platform metadata database (SQLite) connection config.
+- `pipeline.batchSize`: Number of records per Sink batch write.
+- `pipeline.channelSize`: Pipeline stage channel buffer size.
+- `serverUrl`: Backend API listen address.
+- `runWeb`: Whether to start the embedded static Web service.
+- `webUrl`: Embedded static Web service listen address.
+- `corsOrigins`: List of allowed frontend CORS origins.
 
-  ::: tip Tip
-  - Administrator login is the account password when the project frontend enters the panel. After successful login, a JWT token will be generated based on the secret.
-  - JWT token is a stateless authentication method. After successful user login, the server will return a Token, which will be carried in subsequent user requests. The server will verify the user's identity based on the Token, which is the current mainstream authentication method.
-  - It is recommended to change the default password and secret in the configuration file.
-  - If you deploy the project on a server, you must modify the default secret to prevent attacks.
-  :::
+Terminology distinction:
 
-### AES Encryption
-- aesKey: AES encryption key
+- `username/password`: Platform admin login credentials (top-level in `config.yaml`)
+- `user/password`: Database data source connection credentials (data source component parameters)
 
-  ::: tip Tip
-    We will use AES encryption when storing sensitive information, which will effectively protect the security of sensitive information in Sqlite. Your stored data source related configuration information will be encrypted and stored. Even if the relevant database information is leaked, the data is still safe.
-  :::
+## Environment Variable Overrides
 
-### Frontend-Backend Addresses
-When the project is running, it will occupy 2 ports, one for API services and one for Web services.
-- serverUrl: API service address
-- webUrl: Web service address
+The following environment variables can override `config.yaml` settings:
 
-  ::: tip Tip
-  - The API service address and Web service address cannot be the same, otherwise it will not start.
-  - If you modify the serverUrl, you will not be able to use the built-in Web service. Please refer to the [Frontend-Backend Separation]() instructions, repack the frontend project, and set runWeb to false, and use nginx or other programs to run the Web service.
-  - Please do not add the http:// prefix to the service address.
-  :::
+- `ETL_USERNAME`
+- `ETL_PASSWORD`
+- `ETL_JWT_SECRET`
+- `ETL_API_SECRET`
+- `ETL_AES_KEY`
+- `ETL_SERVER_URL`
+- `ETL_LOG_LEVEL`
 
-### Other Configuration Items
-- initDb: Whether to initialize the database
-- logLevel: Log level (dev|prod)
-- runWeb: Whether to start the Web interface
+## Production Recommendations
 
-  ::: tip Tip
-    - When the system runs for the first time, initDB will default to true. After waiting for the initialization to complete, the system will automatically set initDB to false.
-    - If you need to use the built-in Web service, please set runWeb to true, and set webUrl to a locally available port, but please do not modify serverUrl.
-    - When you set logLevel to dev, the system will output logs to the console.
-  :::
+1. Change the default credentials to avoid weak passwords.
+2. Use high-entropy random values for `jwtSecret`, `apiSecret`, and `aesKey`.
+3. Only include actual frontend domains in `corsOrigins`; do not use `*` (unless explicitly required).
+4. Adjust the log path to a persistent directory to avoid losing logs on container restart.
+5. Tune `pipeline.batchSize/channelSize` based on task throughput.
+
+## Common Error Troubleshooting
+
+### 1. Startup reports config file read failure
+
+- Check that `config.yaml` exists in the current working directory.
+
+### 2. Login fails after startup
+
+- Check whether `ETL_USERNAME/ETL_PASSWORD` environment variables are overriding the config.
+
+### 3. CORS errors
+
+- Check that `corsOrigins` includes the current frontend address (protocol and port must match exactly).
+
+### 4. High memory usage during large tasks
+
+- Reduce `pipeline.channelSize` and `pipeline.batchSize` appropriately.

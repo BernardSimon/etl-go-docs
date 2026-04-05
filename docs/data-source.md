@@ -1,214 +1,81 @@
+
 # 数据源配置
 
-数据源是 ETL-GO 中用于连接外部数据库或文件系统的配置。您可以在系统中配置多个数据源，并在任务中引用它们。
+ETL-GO 内置的数据库数据源类型包括：
 
-## 支持的数据源类型
+- MySQL
+- PostgreSQL
+- SQLite
+- Doris
 
-ETL-GO 目前支持以下数据源类型：
+## 数据源作用与边界
 
-| 类型 | 描述 | 适用场景 |
-|------|------|----------|
-| **MySQL** | MySQL 数据库连接 | 关系型数据库数据提取和加载 |
-| **PostgreSQL** | PostgreSQL 数据库连接 | 关系型数据库数据提取和加载 |
-| **SQLite** | SQLite 数据库连接 | 轻量级本地数据库 |
-| **Doris** | Apache Doris 数据库连接 | 大规模数据分析场景 |
+- 数据源用于管理连接参数，并提供给 `Source/Sink/Executor/Variable` 复用。
+- 一个任务内可共享同一数据源连接，减少重复连接创建。
+- 数据源本身不执行业务逻辑，只负责连接初始化和生命周期。
 
-## 创建数据源
+## 通用字段
 
-### 通过 Web 界面创建
+- `name`：数据源名称
+- `type`：数据源类型，例如 `mysql`, `postgre`, `sqlite`, `doris`
+- `host` / `port`：服务地址
+- `user` / `password`：登录账号
+- `database`：数据库名称
 
-1. 登录 ETL-GO Web 界面（默认地址：`http://localhost:8081`）
-2. 在左侧导航栏点击「数据源管理」
-3. 点击「新建数据源」按钮
-4. 选择数据源类型并填写配置信息
-5. 点击「测试连接」验证配置是否正确
-6. 点击「保存」
+## 各类型最小配置建议
 
-### 配置参数说明
+### MySQL
 
-#### MySQL 数据源配置
+- `host`
+- `port`（默认 `3306`）
+- `user`
+- `password`
+- `database`
 
-```yaml
-# 基础配置
-host: localhost      # 数据库主机地址
-port: 3306          # 数据库端口
-user: root          # 数据库用户名
-password: password  # 数据库密码
-database: test_db   # 数据库名称
+### PostgreSQL
 
-# 高级配置（可选）
-charset: utf8mb4    # 字符集
-timeout: 10s        # 连接超时时间
-max_open_conns: 10  # 最大连接数
-max_idle_conns: 5   # 最大空闲连接数
-```
+- `host`
+- `port`
+- `user`
+- `password`
+- `database`
 
-#### PostgreSQL 数据源配置
+### SQLite
 
-```yaml
-host: localhost
-port: 5432
-user: postgres
-password: password
-database: test_db
-sslmode: disable    # SSL模式（disable/require/verify-full）
-```
+- `path`（文件路径）
 
-#### SQLite 数据源配置
+### Doris
 
-```yaml
-path: /path/to/database.db  # 数据库文件路径
-```
+- `host`
+- `port`
+- `user`
+- `password`
+- `database`
 
-#### Doris 数据源配置
+## 使用场景
 
-```yaml
-host: localhost
-port: 9030
-user: admin
-password: password
-database: test_db
-```
+- SQL 源读取数据库内容
+- SQL Sink 将数据写回数据库
+- Executor 执行上下游 SQL 语句
+- Variable 从数据库读取动态参数
 
-## 数据源管理
+## 使用建议与最佳实践
 
-### 查看数据源列表
-在「数据源管理」页面可以查看所有已配置的数据源，包括：
-- 数据源名称
-- 数据源类型
-- 连接状态
-- 最后修改时间
+- 为“源库”和“目标库”分别建独立数据源，避免配置混淆。
+- 数据源命名建议包含环境和用途，例如 `prod_mysql_read`。
+- 当任务中同时使用多个数据库时，请分别配置不同的数据源名称。
+- `Doris` 主要用于 Sink 端 Stream Load。
 
-### 编辑数据源
-点击数据源列表中的「编辑」按钮可以修改数据源配置。
+## 常见错误排查
 
-### 删除数据源
-点击数据源列表中的「删除」按钮可以删除不再需要的数据源。
+### 1. `数据源不存在`
 
-**注意**：删除数据源时，请确保没有任务正在引用该数据源。
+- 任务里引用的 `data_source` ID 无效或已删除。
 
-### 测试连接
-在创建或编辑数据源时，可以点击「测试连接」按钮验证配置是否正确。
+### 2. `数据源类型错误`
 
-## 在任务中使用数据源
+- 例如 SQL Sink 期望 `mysql`，但任务绑定了 `postgre` 数据源。
 
-配置好的数据源可以在以下任务组件中使用：
+### 3. 连接失败/超时
 
-### 1. 数据输入（Source）
-在 SQL 查询类型的数据输入中，可以选择已配置的数据源：
-```sql
-SELECT * FROM users WHERE created_at > '2024-01-01'
-```
-
-### 2. 数据输出（Sink）
-在 SQL 表类型的数据输出中，可以选择目标数据源：
-```sql
-INSERT INTO target_table (column1, column2) VALUES (?, ?)
-```
-
-### 3. 执行器（Executor）
-在执行 SQL 脚本时，可以选择执行的数据源。
-
-### 4. 变量（Variable）
-在 SQL 查询变量中，可以选择查询的数据源。
-
-## 最佳实践
-
-### 1. 命名规范
-建议使用有意义的名称命名数据源，如：
-- `prod_mysql_order_db` - 生产环境订单数据库
-- `dev_postgres_log_db` - 开发环境日志数据库
-
-### 2. 环境隔离
-建议为不同环境配置不同的数据源：
-- 开发环境
-- 测试环境  
-- 生产环境
-
-### 3. 权限控制
-- 生产环境数据库建议使用只读权限账户作为数据源
-- 数据输出到生产环境时使用有写入权限的账户
-
-### 4. 连接池优化
-- 根据业务负载调整最大连接数
-- 设置合理的连接超时时间
-
-## 故障排除
-
-### 常见问题
-
-#### 1. 连接失败
-**可能原因**：
-- 网络不可达
-- 数据库服务未启动
-- 用户名/密码错误
-- 防火墙限制
-
-**解决方案**：
-- 检查网络连通性
-- 确认数据库服务状态
-- 验证登录凭据
-- 检查防火墙配置
-
-#### 2. 连接超时
-**可能原因**：
-- 网络延迟过高
-- 数据库负载过大
-- 连接池配置不当
-
-**解决方案**：
-- 增加连接超时时间
-- 优化数据库性能
-- 调整连接池参数
-
-#### 3. 权限不足
-**可能原因**：
-- 账户缺少必要权限
-- IP 地址未授权
-
-**解决方案**：
-- 检查数据库账户权限
-- 配置 IP 白名单
-
-## API 参考
-
-### 创建数据源
-```http
-POST /api/dataSource
-Content-Type: application/json
-
-{
-  "name": "生产MySQL",
-  "type": "mysql",
-  "data": {
-    "host": "localhost",
-    "port": "3306",
-    "user": "etl_user",
-    "password": "secure_password",
-    "database": "production_db"
-  },
-  "edit": "true"
-}
-```
-
-### 获取数据源列表
-```http
-GET /api/dataSource/list
-```
-
-### 删除数据源
-```http
-DELETE /api/dataSource
-Content-Type: application/json
-
-{
-  "id": "datasource_123"
-}
-```
-
-## 下一步
-
-配置好数据源后，您可以：
-1. [创建变量配置](/variable) - 定义动态查询参数
-2. [创建任务](/task) - 配置完整的数据处理流程
-3. [设置任务调度](/task-schedule) - 自动化执行任务
+- 检查网络连通性、防火墙、账号权限、库名拼写。

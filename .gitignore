@@ -3,3 +3,6 @@
 /docs/public/release/
 /docs/.vitepress/cache/
 /package-lock.json
+.idea
+.DS_Store
+.temp

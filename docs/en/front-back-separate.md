@@ -1,75 +1,61 @@
-# Frontend-Backend Separation
-::: tip Tip
-ETL-GO is natively a frontend-backend separated architecture. To maintain the convenience of local user operation, the frontend is packaged within the executable file during backend construction, and an HTTP service is built within the backend through static simulation forwarding.
-:::
-When you need to deploy on a server, or need to run the frontend in dev mode, or need to modify the backend running port, you need to refer to this document for frontend-backend separation deployment.
+# Frontend-Backend Separated Development
 
-## Compiling Frontend
-- Please refer to the previous chapter [Building from Source](./en/build) to obtain all the source code of this project and modify the backend address in the frontend environment configuration to your backend address
-- The project backend allows all sources through HTTP header information and defaults to allowing cross-domain requests
+This project supports separated development of the backend API and frontend UI, making it easy to debug each independently and iterate quickly.
 
-After completing the above work, you need to enter the frontend project directory and install all frontend dependencies:
+## 1. Start the Backend
+
+Modify `config.yaml`:
+
+```yaml
+runWeb: false
+serverUrl: 0.0.0.0:8080
+corsOrigins:
+  - http://localhost:5173
+```
+
+Then start the backend:
+
 ```bash
-cd /path/to/your/project/etl-go/web
+go build -o etl-go .
+./etl-go
+```
+
+## 2. Start the Frontend
+
+```bash
+cd web
 pnpm install
+pnpm dev -- --host 0.0.0.0
 ```
 
-When you need to run the frontend in dev mode, please execute the following command in the frontend project directory. The frontend project will be deployed and run at http://localhost:5244 by default. When the port is occupied, please check the command line prompt to find the running port address:
+The frontend listens on `http://localhost:5173` by default.
 
-```bash
-cd /path/to/your/project/etl-go/web
-pnpm dev
-```
+## 3. Debugging Workflow
 
-When you need to package the frontend project as static resources, please execute the following command to compile the frontend source code:
+- Backend API address: `http://127.0.0.1:8080`
+- Frontend dev address: `http://127.0.0.1:5173`
 
-```bash
-cd /path/to/your/project/etl-go/web
-pnpm build
-```
-After compilation is complete, you can find the compiled frontend build files in the /path/to/your/project/etl-go/web/dist directory, and package and upload them to your HTTP service.
+If CORS issues occur, make sure `corsOrigins` includes the frontend address.
 
-## Compiling Backend Source Code
-::: tip Tip
-Please note that regardless of whether you perform frontend-backend separation, a built-in HTTP service and the required frontend build files will be included in the default backend project. Therefore, you need to complete the frontend build (pnpm build) according to the above steps and ensure that the dist directory contains the built frontend files before starting backend build. When you completely don't need this service, you can edit the main.go file of the backend project to remove the related service code.
-:::
+## 4. Recommended Joint Debugging Checklist
 
-If you need to cross-compile executable programs for other operating systems or architectures, please set the corresponding environment variables:
+1. After opening the frontend in a browser, test the login endpoint first.
+2. Check that all Network requests go to `serverUrl`.
+3. Access `/api/v1/components` to confirm backend component metadata is returned correctly.
 
-```bash
-export GOOS=yourOS GOARCH=yourArch
-```
+## 5. Common Issues
 
-Common `GOOS` and `GOARCH` combinations include:
+### 1. Frontend opens but all API calls return 404
 
-| GOOS    | GOARCH |
-|---------|--------|
-| linux   | amd64  |
-| linux   | arm64  |
-| windows | amd64  |
-| darwin  | amd64  |
-| darwin  | arm64  |
+- Cause: Frontend proxy address is misconfigured or the backend is not started.
+- Fix: Confirm the frontend API base URL points to `http://127.0.0.1:8080/api/v1`.
 
-After completing the above configuration, execute the following command to compile the backend source code:
+### 2. Login request blocked by browser (CORS)
 
-```bash
-cd /path/to/your/project/etl-go/
-go build -o etl-go
-```
-Now you can find the etl-go executable file in this directory.
+- Cause: `corsOrigins` is missing the current frontend address.
+- Fix: Add `http://localhost:5173` or your actual domain.
 
-## Creating a New Runtime Directory
-You need to create a new project runtime root directory according to the following directory structure, and place the built executable file in this directory:
- ```
-|-- etl-go                  # Executable program directory
-|   |-- etl-go.exe          # Executable file, etl-go on Linux/macOS systems
-|   |-- data.db             # SQLite database
-|   |-- config.yaml         # Configuration file
-|   |-- log                 # Log directory
-|   |-- file                # File directory
-|       |-- input           # Upload file directory
-|       |-- output          # Download file directory
+### 3. Cookie/Token behavior anomalies
 
- ```
-For generating the config.yaml file, please refer to the [Configuration File](./en/config) chapter.
-In the case of frontend-backend separation, you need to set runWeb to false in the config.
+- Cause: Cross-origin credential policy is inconsistent with CORS settings.
+- Fix: Ensure requests include the `Authorization` header and check the backend's allowed header list.

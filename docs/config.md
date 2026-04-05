@@ -1,50 +1,96 @@
-# 配置项
-配置项存储于项目可执行文件的根目录内的`config.yaml`。
-## 标准配置文件
-```yaml
-# ./config.yaml
-username: admin                    # 管理员用户名
-password: password123             # 管理员密码
-jwtSecret: <your-jwt-secret>      # JWT密钥
-aesKey: <your-aes-key>            # AES加密密钥
-initDb: false                     # 是否初始化数据库
-logLevel: prod                     # 日志级别 (dev|prod)
-serverUrl: localhost:8080         # API服务地址
-runWeb: true                     # 是否启动Web界面
-webUrl: localhost:8081            # Web界面地址
-```
-## 主要配置项
-### 登陆信息
-- username: 管理员用户名
-- password: 管理员密码
-- jwtSecret: JWT密钥
-  ::: tip 提示
-  - 管理员登陆为项目前端进入面板时的账户密码，登陆成功后会根据密钥生成JWT令牌。
-  - JWT令牌是一种无状态的认证方式，用户登陆成功后，服务端会返回一个Token，用户后续的请求中会携带这个Token，服务端会根据Token验证用户身份，这是目前的主流认证方式。
-  - 建议在配置文件中更改默认的密码和密钥。
-  - 如果您在服务器上部署项目，请必须修改默认的密钥，防止被攻击。
-  :::
 
-### AES 加密
-- aesKey: AES加密密钥
-  ::: tip 提示
-    我们会在存储敏感信息时使用AES加密，这将有效保护Sqlite内敏感信息的安全性，您存储的数据源相关配置信息将会加密存储，即便相关数据库信息被泄露，数据仍然安全。
-  :::
-### 前后端地址
-项目在运行时，会占用2个端口，分别用于API服务、Web服务。
-- serverUrl: API服务地址
-- webUrl: Web服务地址
-  ::: tip 提示
-  - API服务地址和Web服务地址不能相同，否则将无法启动。
-  - 如果您修改了serverUrl，那么您将无法使用内建的Web服务，请参考[前后端分离]()说明，重新打包前端项目，并且设置runWeb为false，使用nginx或其他程序运行Web服务。
-  - 服务地址请不要加http://前缀。
-  :::
-### 其他配置项
-- initDb: 是否初始化数据库
-- logLevel: 日志级别 (dev|prod)
-- runWeb: 是否启动Web界面
-  ::: tip 提示
-    - 系统第一次运行时将默认initDB为true，等待初始化完成后，系统将自动设置initDB为false。
-    - 如果您需要使用内建的Web服务，请将runWeb设置为true，并设置webUrl为本机可用端口，但请不要修改serverUrl。
-    - 当您设置的logLevel为dev时，系统将在控制台输出日志。
-  :::
+# 配置文件
+
+ETL-GO 使用根目录下的 `config.yaml` 进行运行时配置。当前版本不会自动创建样板配置，请从仓库根目录直接编辑该文件。
+
+## 关键配置项
+
+```yaml
+username: admin
+password: password123
+jwtSecret: <your-secret>
+apiSecret: <your-api-secret>
+aesKey: <your-aes-key>
+initDb: false
+logLevel: dev
+log:
+  filename: ./log/app.log
+  maxSize: 20
+  maxBackups: 3
+  maxAge: 7
+  compress: true
+database:
+  path: ./data.db
+  maxOpenConns: 10
+  maxIdleConns: 5
+  connMaxLifetime: 300
+pipeline:
+  batchSize: 1000
+  channelSize: 10000
+serverUrl: 0.0.0.0:8080
+runWeb: false
+webUrl: 0.0.0.0:8081
+corsOrigins:
+  - http://localhost:8081
+  - http://localhost:5173
+```
+
+## 参数说明
+
+- `username` / `password`：Web 登录账号。
+- `jwtSecret`：JWT 认证签名密钥。
+- `apiSecret`：API 认证签名密钥。
+- `aesKey`：AES 加解密密钥，用于敏感字段加密。
+- `initDb`：首次运行时设为 `true` 可自动执行数据库迁移。
+- `logLevel`：`dev` 或 `prod`。
+- `log`：日志滚动配置（文件名、大小、保留份数、压缩等）。
+- `database`：平台元数据库（SQLite）连接配置。
+- `pipeline.batchSize`：Sink 批量写入记录数。
+- `pipeline.channelSize`：Pipeline 阶段通道缓冲大小。
+- `serverUrl`：后端 API 监听地址。
+- `runWeb`：是否启动嵌入式静态 Web 服务。
+- `webUrl`：内置静态 Web 服务监听地址。
+- `corsOrigins`：允许跨域的前端地址列表。
+
+术语区分：
+
+- `username/password`：平台管理员登录账号（`config.yaml` 顶层）
+- `user/password`：数据库数据源连接账号（数据源组件参数）
+
+## 环境变量覆盖
+
+以下环境变量可以覆盖 `config.yaml` 设置：
+
+- `ETL_USERNAME`
+- `ETL_PASSWORD`
+- `ETL_JWT_SECRET`
+- `ETL_API_SECRET`
+- `ETL_AES_KEY`
+- `ETL_SERVER_URL`
+- `ETL_LOG_LEVEL`
+
+## 生产环境建议
+
+1. 修改默认账号密码，避免弱口令。
+2. 为 `jwtSecret`、`apiSecret` 和 `aesKey` 使用高强度随机值。
+3. `corsOrigins` 仅保留真实前端域名，不要放开 `*`（除非明确需要）。
+4. 调整日志路径到持久化目录，避免容器重启丢失。
+5. 根据任务量调优 `pipeline.batchSize/channelSize`。
+
+## 常见错误排查
+
+### 1. 启动报配置文件读取失败
+
+- 检查 `config.yaml` 是否在当前运行目录。
+
+### 2. 启动后登录失败
+
+- 检查是否被 `ETL_USERNAME/ETL_PASSWORD` 环境变量覆盖。
+
+### 3. 跨域报错
+
+- 检查 `corsOrigins` 是否包含当前前端地址（协议、端口需完全一致）。
+
+### 4. 大任务运行内存偏高
+
+- 适当降低 `pipeline.channelSize` 与 `pipeline.batchSize`。

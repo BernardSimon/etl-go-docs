@@ -1,79 +1,71 @@
-# Building from Source
+# Build from Source
 
-ETL-GO adopts a front-end and back-end separation architecture design. To simplify the deployment process, the back-end program embeds a set of front-end static resources to simulate nginx starting the front-end service. When you need to build from source, please follow the steps below.
+It is recommended to build both the backend and frontend from source to ensure the runtime matches the current code.
 
-## Getting the Source Code
+## 1. Prerequisites
 
-::: tip Tip
-Please install Git, Go, NodeJS, and pnpm environments first
-:::
+- Go 1.24+ installed
+- Node.js 18+
+- pnpm installed
 
-Execute the following command to get all the source code of this project from GitHub:
-
-```bash
-cd /path/to/your/project
-git clone https://github.com/BernardSimon/etl-go.git
-```
-
-
-## Compiling Front-end Source Code
-
-By default, the front-end application will connect to the back-end service at `http://localhost:8080`. If you need to change this address, please modify the `VITE_API_BASE_URL` field in the `web/.env.production` file.
-
-If you need to run the front-end program in development mode, please also modify the `VITE_API_BASE_URL` field in the `web/.env.development` file.
-
-```yaml
-VITE_API_BASE_URL=http://your.api.url
-```
-
-
-After completing the front-end source code preparation, execute the following command to compile the front-end source code:
+## 2. Fetch Dependencies
 
 ```bash
-cd /path/to/your/project/etl-go/web
+go mod download
+cd web
 pnpm install
+cd ..
+```
+
+## 3. Build the Backend
+
+```bash
+go build -o etl-go .
+```
+
+## 4. Build the Frontend
+
+```bash
+cd web
 pnpm build
+cd ..
 ```
 
+> After the build completes, `web/dist` will contain the static files. The backend program has built-in support for embedding static web pages.
 
-## Compiling Back-end Source Code
-
-If you need to cross-compile executable programs for other operating systems or architectures, please set the corresponding environment variables:
+## 5. Run the Program
 
 ```bash
-export GOOS=yourOS GOARCH=yourArch
+./etl-go
 ```
 
-
-Common `GOOS` and `GOARCH` combinations include:
-
-| GOOS    | GOARCH |
-|---------|--------|
-| linux   | amd64  |
-| linux   | arm64  |
-| windows | amd64  |
-| darwin  | amd64  |
-| darwin  | arm64  |
-
-After completing the above configuration, execute the following command to compile the back-end source code:
+## 6. Common Makefile Commands
 
 ```bash
-cd /path/to/your/project/etl-go/
-go build -o etl-go
+make build   # Generate bin/etl-go
+make test    # Run tests
+make race    # Enable race detector
+make vet     # Run go vet
 ```
 
+## 7. Build Output Verification
 
-## Creating a New Runtime Directory
-You need to create a new project runtime root directory according to the following directory structure, and place the built executable file in this directory:
- ```
-|-- etl-go                  # Executable program directory
-|   |-- etl-go.exe          # Executable file, etl-go on Linux/macOS systems
-|   |-- data.db             # SQLite database
-|   |-- config.yaml         # Configuration file
-|   |-- log                 # Log directory
-|   |-- file                # File directory
-|       |-- input           # Upload file directory
-|       |-- output          # Download file directory
+- Backend binary: `./etl-go` or `./bin/etl-go`
+- Frontend artifacts: `./web/dist`
+- Confirm API is accessible after startup: `/api/v1/login`
 
- ```
-For generating the config.yaml file, please refer to the [Configuration File](./en/config) chapter
+## Common Issues
+
+### 1. `go: module ... not found`
+
+- Check proxy settings and network connectivity.
+- Re-run `go mod download`.
+
+### 2. `pnpm: command not found`
+
+- Install pnpm first: `npm i -g pnpm`.
+
+### 3. Build succeeds but page returns 404
+
+- Frontend may not have been built, or `runWeb=false`.
+- Check that `web/dist` exists and confirm the run mode.

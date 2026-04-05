@@ -1,54 +1,86 @@
 # Quick Start
-ETL-GO is an out-of-the-box open-source data integration tool designed to help users quickly integrate data, achieve offline data synchronization, and provide scheduled tasks, system variables, and pre/post scripts to help users automate data integration.
 
-## Features
-- **Out-of-the-box**: Built-in multiple commonly used data sources, processors, and target components
-- **Highly Extensible**: Plugin architecture, supports custom component development
-- **Visual Configuration**: Provides a Web interface for task configuration and monitoring
-- **Multi-Data Source Support**: MySQL, PostgreSQL, SQLite, Doris, CSV, JSON, etc.
-- **Rich Processors**: Data type conversion, row filtering, data masking, column renaming, etc.
-- **Task Scheduling**: Supports scheduled tasks and manual triggering
-- **Variable Management**: Dynamic configuration and SQL variable support
-- **File Management**: Built-in file upload and management functions
-- **Log Monitoring**: Comprehensive log recording and task execution monitoring
+This page describes how to quickly run ETL-GO and open the Web management interface. It is recommended to complete the basic configuration of `config.yaml` before starting the service.
 
-## Main Functions
+## 1. Clone the Repository
 
-## Current Official Plugins
+```bash
+git clone https://github.com/BernardSimon/etl-go.git
+cd etl-go
+```
 
-### Data Source (DataSource)
-- MySQL
-- PostgreSQL
-- SQLite
-- Doris
+## 2. Install Backend Dependencies
 
-### Data Input (Source)
-- SQL Query (MySQL, PostgreSQL, SQLite)
-- CSV Files
-- JSON Files
+```bash
+go mod download
+```
 
-### Data Processing (Processor)
-- convertType: Data Type Conversion
-- filterRows: Row Filtering
-- maskData: Data Masking (MD5, SHA256)
-- renameColumn: Column Renaming
-- selectColumns: Column Selection
+## 3. Install Frontend Dependencies
 
-### Data Output (Sink)
-- SQL Tables (MySQL, PostgreSQL, SQLite)
-- CSV Files
-- JSON Files
-- Doris Fast Output (stream_load)
+```bash
+cd web
+pnpm install
+cd ..
+```
 
-### Executor (Executor)
-- SQL Execution (MySQL, PostgreSQL, SQLite)
+## 4. Edit the Configuration File
 
-### Variable (Variable)
-- SQL Query Variables (MySQL, PostgreSQL, SQLite)
+The `config.yaml` in the root directory manages runtime parameters.
 
-::: warning Attention!
-If the plugins provided by the official cannot meet your needs, please carefully verify the plugin information before using third-party plugins to avoid database sensitive information leakage or data corruption.
-:::
+The default configuration file contains:
 
-## Tech Stack
-This project is developed based on the [go-pocket-etl](https://github.com/changhe626/go-pocket-etl) core code, with the backend developed using Gin, GORM, Sqlite, and Zap, and the frontend developed using Vue3 and Antdv.
+- `serverUrl`: Backend API address, e.g. `0.0.0.0:8080`
+- `runWeb`: Whether to start the built-in static frontend service
+- `webUrl`: Built-in frontend service address, e.g. `0.0.0.0:8081`
+- `database.path`: SQLite storage file location
+- `pipeline.batchSize`: Batch write size
+
+It is recommended to at least change `username`, `password`, and `jwtSecret`.
+
+## 5. Start the Backend Service
+
+```bash
+go build -o etl-go .
+./etl-go
+```
+
+If `runWeb: true` is set in the configuration, the backend will also start the static Web console; otherwise only the API service starts.
+
+## 6. Access the Web Management Interface
+
+Default access:
+
+- Backend API: `http://127.0.0.1:8080`
+- Frontend console: `http://127.0.0.1:8081`
+
+If `runWeb: true`, the backend will automatically try to open the Web address on startup.
+
+## 7. Run a Task
+
+1. Log in to the Web console
+2. Configure a data source
+3. Create a task and select Source/Processor/Sink
+4. Execute manually or set up a Cron schedule
+
+## 8. Minimal Self-Check via API
+
+Get a token by logging in:
+
+```bash
+curl -s -X POST http://127.0.0.1:8080/api/v1/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"password123"}'
+```
+
+View component metadata (verify factory registration):
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:8080/api/v1/components
+```
+
+## 9. Common Issues
+
+- Cannot access the frontend: confirm that `runWeb`, `webUrl`, and `corsOrigins` are configured correctly.
+- Backend fails to start: check `config.yaml` syntax and SQLite file access permissions.
+- Login failure: default username is `admin`, default password is `password123`. It is recommended to change to a strong password.

@@ -1,80 +1,72 @@
+
 # 从源码构建
 
-ETL-GO 采用前后端分离架构设计。为了简化部署流程，后端程序会内嵌一份前端静态资源，从而模拟 nginx 启动前端服务。当您需要从源码构建时，请按照以下步骤操作。
+本项目推荐通过源码构建后端和前端，确保运行时与当前代码保持一致。
 
-## 获取源码
+## 1. 准备环境
 
-::: tip 提示
-请先安装 Git、Go、NodeJS 和 pnpm 环境
-:::
+- Go 1.24+ 安装完成
+- Node.js 18+ 或更高
+- pnpm 已安装
 
-执行以下命令从 GitHub 获取本项目的全部源代码：
-
-```bash
-cd /path/to/your/project
-git clone https://github.com/BernardSimon/etl-go.git
-```
-
-
-## 编译前端源代码
-
-默认情况下，前端应用会连接到 `http://localhost:8080` 的后端服务。如果您需要更改此地址，请修改 `web/.env.production` 文件中的 `VITE_API_BASE_URL` 字段。
-
-若您需要在开发模式下运行前端程序，请同步修改 `web/.env.development` 文件中的 `VITE_API_BASE_URL` 字段。
-
-```yaml
-VITE_API_BASE_URL=http://your.api.url
-```
-
-
-完成前端源代码的准备工作后，执行以下命令编译前端源代码：
+## 2. 拉取依赖
 
 ```bash
-cd /path/to/your/project/etl-go/web
+go mod download
+cd web
 pnpm install
+cd ..
+```
+
+## 3. 构建后端
+
+```bash
+go build -o etl-go .
+```
+
+## 4. 构建前端
+
+```bash
+cd web
 pnpm build
+cd ..
 ```
 
+> 构建完成后，`web/dist` 会生成静态文件，后端程序内置了嵌入静态网页能力。
 
-## 编译后端源代码
-
-如果您需要交叉编译适用于其他操作系统或架构的可执行程序，请设置相应的环境变量：
+## 5. 运行程序
 
 ```bash
-export GOOS=yourOS GOARCH=yourArch
+./etl-go
 ```
 
-
-常用的 `GOOS` 和 `GOARCH` 组合包括：
-
-| GOOS    | GOARCH |
-|---------|--------|
-| linux   | amd64  |
-| linux   | arm64  |
-| windows | amd64  |
-| darwin  | amd64  |
-| darwin  | arm64  |
-
-完成上述配置后，执行以下命令编译后端源代码：
+## 6. Makefile 常用命令
 
 ```bash
-cd /path/to/your/project/etl-go/
-go build -o etl-go
+make build   # 生成 bin/etl-go
+make test    # 运行测试
+make race    # 启用 race detector
+make vet     # 运行 go vet
 ```
 
+## 7. 构建结果检查
 
-## 新建运行目录
-您需要按照如下目录结构，新建项目的运行根目录，并将构建好的可执行文件放置在该目录下：
- ```
-|-- etl-go                  # 可执行程序目录
-|   |-- etl-go.exe          # 可执行文件，在 Linux/macOS 系统中为 etl-go
-|   |-- data.db             # SQLite 数据库
-|   |-- config.yaml         # 配置文件
-|   |-- log                 # 日志目录
-|   |-- file                # 文件目录
-|       |-- input           # 上传文件目录
-|       |-- output          # 下载文件目录
+- 后端二进制：`./etl-go` 或 `./bin/etl-go`
+- 前端产物：`./web/dist`
+- 启动后确认 API 可访问：`/api/v1/login`
 
- ```
-config.yaml文件的生成请参考[配置文件](./config)章节
+## 常见问题
 
+### 1. `go: module ... not found`
+
+- 检查代理设置与网络连通性。
+- 重新执行 `go mod download`。
+
+### 2. `pnpm: command not found`
+
+- 先安装 pnpm：`npm i -g pnpm`。
+
+### 3. 构建成功但页面 404
+
+- 可能未构建前端或 `runWeb=false`。
+- 检查 `web/dist` 是否存在并确认运行模式。

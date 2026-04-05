@@ -3,75 +3,90 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   ignoreDeadLinks: true,
-  head: [['link', { rel: 'icon', href: '/public/icon.ico' }]],
+  head: [['link', { rel: 'icon', href: '/icon.ico' }]],
   title: "ETL-GO 文档站",
   description: "开箱即用的开源ETL",
   themeConfig: {
     search: {
       provider: 'local'
     },
-    logo: '/public/logo.png',
+    logo: '/logo.png',
     lang : 'zh',
     nav: [
       { text: '首页', link: '/' },
-      { text: '文档', link: '/quick-start' },
+      { text: '文档', link: '/getting-started' },
+      { text: '开发', link: '/develop-prepare' },
       { text: '下载', link: '/download' }
     ],
 
     sidebar: [
       {
-        text: '使用文档',
+        text: '开始使用',
         items: [
+          { text: '入门指南', link: '/getting-started' },
           { text: '快速开始', link: '/quick-start' },
-          { text: '安装ETL-GO', items: [
+          { text: '安装与部署', items: [
               { text: '使用已构建安装包', link: '/install' },
               { text: '从源码构建', link: '/build' },
-              {text:'前后端分离',link: '/front-back-separate'}
+              { text: '运行程序', link: '/run' },
+              { text:'前后端分离', link: '/front-back-separate' }
             ] },
+        ]
+      },
+      {
+        text: '运行配置',
+        items: [
           { text: '配置文件', link: '/config' },
-          { text: '运行程序', link: '/run'},
-          { text: '数据源配置', link: '/data-source'},
+          { text: 'API 参考', link: '/api-reference' },
+          { text: '内置组件', link: '/builtin-components' },
+          { text: '数据源配置', link: '/data-source' },
           { text: '变量配置', link: '/variable' },
+        ]
+      },
+      {
+        text: '任务使用',
+        items: [
           { text: '任务配置' ,items:  [
               { text: '创建任务', link: '/task' },
-              { text: '前后置处理器', link: '/task-executor' },
               { text: '数据输入', link: '/task-source' },
               { text: '数据处理', link: '/task-processor' },
               { text: '数据输出', link: '/task-sink' },
-              { text: '快速文件上传', link: '/task-file' },
+              { text: '前后置处理器', link: '/task-executor' },
             ] },
           { text: '任务调度与执行', link: '/task-schedule' },
           { text: '查看任务执行情况', link: '/task-record' },
           { text: '日志分析', link: '/task-log' },
-          { text: '文件管理', link: '/file' },
+          { text: '文件管理', link: '/task-file' },
+          { text: '任务优化', link: '/task-optimization' },
+          { text: '任务依赖', link: '/task-dependency' },
         ]
       },
       {
         text: '开发指南',
         items: [
           { text: '开发准备', link: '/develop-prepare' },
-          { text: '主程序开发', items:[
+          { text: '主程序开发', items: [
               { text: '获取主程序代码', link: '/develop-source' },
               { text: '代码架构', link:  '/develop-architecture' },
-              { text: '注册组件', link: '/develop-install-components' },
             ] },
           { text: '组件开发', items: [
-              { text: '获取组件开发包', link: '/develop-component-source' },
                 { text: '开发组件默认约定', link: '/develop-component-architecture' },
                 { text: '数据源组件开发', link: '/develop-component-datasource' },
-                { text: '数据输入组件', link: '/develop-component-source' },
-                { text: '数据处理组件', link: '/develop-component-processor' },
-                { text: '数据输出组件', link: '/develop-component-sink' },
-                { text: '数据执行组件', link: '/develop-component-executor' },
-                { text: '变量获取组件', link: '/develop-component-variable' },
+                { text: '数据输入组件开发', link: '/develop-component-source' },
+                { text: '数据处理组件开发', link: '/develop-component-processor' },
+                { text: '数据输出组件开发', link: '/develop-component-sink' },
+                { text: '执行器组件开发', link: '/develop-component-executor' },
+                { text: '变量组件开发', link: '/develop-component-variable' },
             ] }
+          ,
+          { text: '注册组件', link: '/develop-install-components' },
         ]
       },
       {
-        text: '其他页面',
+        text: '项目信息',
         items: [
           { text: '下载程序', link: '/download' },
-          { text: '关于我们', link: '/about' }
+          { text: '关于 ETL-GO', link: '/about' }
         ]
       }
     ],
@@ -98,42 +113,55 @@ export default defineConfig({
       themeConfig : {
         logo: '/logo.png',
         nav: [
-          { text: 'Home', link: '/en' },
-          { text: 'Docs', link: '/en/quick-start' },
+          { text: 'Home', link: '/en/' },
+          { text: 'Docs', link: '/en/getting-started' },
+          { text: 'Develop', link: '/en/develop-prepare' },
           { text: 'Download', link: '/en/download' }
         ],
         sidebar: [
           {
-            text: 'User Guide',
+            text: 'Getting Started',
             items: [
+              { text: 'Getting Started Guide', link: '/en/getting-started' },
               { text: 'Quick Start', link: '/en/quick-start' },
               {
-                text: 'Install ETL-GO',
+                text: 'Installation & Deployment',
                 items: [
                   { text: 'Using Pre-built Package', link: '/en/install' },
                   { text: 'Build from Source', link: '/en/build' },
+                  { text: 'Run the Program', link: '/en/run' },
                   { text: 'Frontend-Backend Separation', link: '/en/front-back-separate' }
                 ]
-              },
-              { text: 'Configuration Files', link: '/en/config' },
-              { text: 'Running the Program', link: '/en/run' },
+              }
+            ]
+          },
+          {
+            text: 'Runtime Configuration',
+            items: [
+              { text: 'Configuration File', link: '/en/config' },
               { text: 'Data Source Configuration', link: '/en/data-source' },
-              { text: 'Variable Configuration', link: '/en/variable' },
+              { text: 'Variable Configuration', link: '/en/variable' }
+            ]
+          },
+          {
+            text: 'Task Usage',
+            items: [
               {
                 text: 'Task Configuration',
                 items: [
                   { text: 'Create Task', link: '/en/task' },
-                  { text: 'Pre/Post Processors', link: '/en/task-executor' },
                   { text: 'Data Input', link: '/en/task-source' },
                   { text: 'Data Processing', link: '/en/task-processor' },
                   { text: 'Data Output', link: '/en/task-sink' },
-                  { text: 'Quick File Upload', link: '/en/task-file' }
+                  { text: 'Pre/Post Processors', link: '/en/task-executor' }
                 ]
               },
-              { text: 'Task Scheduling and Execution', link: '/en/task-schedule' },
+              { text: 'Task Scheduling & Execution', link: '/en/task-schedule' },
               { text: 'View Task Execution Status', link: '/en/task-record' },
               { text: 'Log Analysis', link: '/en/task-log' },
-              { text: 'File Management', link: '/en/file' }
+              { text: 'File Management', link: '/en/task-file' },
+              { text: 'Task Optimization', link: '/en/task-optimization' },
+              { text: 'Task Dependencies', link: '/en/task-dependency' }
             ]
           },
           {
@@ -144,30 +172,29 @@ export default defineConfig({
                 text: 'Main Program Development',
                 items: [
                   { text: 'Get Main Program Code', link: '/en/develop-source' },
-                  { text: 'Code Architecture', link: '/en/develop-architecture' },
-                  { text: 'Register Components', link: '/en/develop-install-components' }
+                  { text: 'Code Architecture', link: '/en/develop-architecture' }
                 ]
               },
               {
                 text: 'Component Development',
                 items: [
-                  { text: 'Get Component Development Kit', link: '/en/develop-component-source' },
-                  { text: 'Basic Component Structure', link: '/en/develop-component-architecture' },
+                  { text: 'Component Development Conventions', link: '/en/develop-component-architecture' },
                   { text: 'Data Source Component Development', link: '/en/develop-component-datasource' },
                   { text: 'Data Input Component Development', link: '/en/develop-component-source' },
                   { text: 'Data Processing Component Development', link: '/en/develop-component-processor' },
                   { text: 'Data Output Component Development', link: '/en/develop-component-sink' },
-                  { text: 'Execution Component Development', link: '/en/develop-component-executor' },
-                  { text: 'Variable Retrieval Component Development', link: '/en/develop-component-variable' }
+                  { text: 'Executor Component Development', link: '/en/develop-component-executor' },
+                  { text: 'Variable Component Development', link: '/en/develop-component-variable' }
                 ]
-              }
+              },
+              { text: 'Register Components', link: '/en/develop-install-components' }
             ]
           },
           {
-            text: 'Other Pages',
+            text: 'Project Info',
             items: [
               { text: 'Download', link: '/en/download' },
-              { text: 'About Us', link: '/en/about' }
+              { text: 'About ETL-GO', link: '/en/about' }
             ]
           }
         ],
